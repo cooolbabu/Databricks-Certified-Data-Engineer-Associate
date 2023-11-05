@@ -5,6 +5,8 @@
 # COMMAND ----------
 
 # DBTITLE 1,Declare Globals
+full_name = "Sreenivas Angara"
+
 application_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="application-id")
 tenant_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="tenant-id")
 secret_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="db1-secret")
@@ -33,12 +35,11 @@ def create_mounts(mount_point, container_name):
 
 # COMMAND ----------
 
-# Add mount points
+
 
 # COMMAND ----------
 
-for mount_point in ["bookstore", "bronze", "silver", "gold"]:
-    create_mounts(mount_point, mount_point)
+
 
 # COMMAND ----------
 
@@ -52,20 +53,7 @@ dbutils.fs.ls(mount_point)
 
 # COMMAND ----------
 
-# DBTITLE 1,Unmount mount points
-# Do it later
-for mount_point in ["bookstore", "bronze", "silver", "gold"]    
-    dbutils.fs.unmount(f"/mnt/{mount_point}")
 
-# COMMAND ----------
-
-spark.read.csv("/mnt/bronze/countries.csv", header=True).display()
-
-# COMMAND ----------
-
-container_name = "bronze"
-account_name = "db0storage"
-mount_point = "/mnt/bronze"
 
 # COMMAND ----------
 
@@ -98,8 +86,8 @@ def download_dataset(source, target):
 # COMMAND ----------
 
 # DBTITLE 1,Download Dataset
-
-download_dataset(data_source_uri, dataset_bookstore)
+# Uncomment if you want to execute from here 
+# download_dataset(data_source_uri, dataset_bookstore)
 
 # COMMAND ----------
 
@@ -142,4 +130,47 @@ def load_new_data(all=False):
 
 # COMMAND ----------
 
-load_new_data()
+# Uncomment to test here
+# load_new_data()
+
+# COMMAND ----------
+
+def mount_point_exist(mount_point):
+    exists = any(mount.mountPoint == mount_point for mount in mounts)
+    if exists:
+        # print(f"The mount point '{mount_point}' exists.")
+        return True
+    else:
+        # print(f"The mount point '{mount_point}' does not exist.")
+        return False
+
+
+# COMMAND ----------
+
+# DBTITLE 1,Mount mount points
+def create_mount_points():    
+    for m_point in ["bookstore", "bronze", "silver", "gold"]:
+        if not mount_point_exist(m_point):
+            create_mounts(m_point, m_point)
+
+# COMMAND ----------
+
+create_mount_points()
+
+# COMMAND ----------
+
+# DBTITLE 1,Unmount mount points
+
+def unmount_mount_points():
+    for m_point in ["bookstore", "bronze", "silver", "gold"]:
+        m_point = f"/mnt/{mount_point}"
+        if mount_point_exist(m_point):
+            dbutils.fs.unmount(m_point)
+
+# COMMAND ----------
+
+#unmount_mount_points()
+
+# COMMAND ----------
+
+mount_point_exist("/mnt/bronze")
