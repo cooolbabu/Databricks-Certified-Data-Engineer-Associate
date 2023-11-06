@@ -1,6 +1,11 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # Setup Azure ADLS
+# MAGIC # Running Helper functions
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC #### Setup Azure ADLS
 
 # COMMAND ----------
 
@@ -36,7 +41,7 @@ def create_mounts(mount_point, container_name):
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # Download Dataset
+# MAGIC #### Download Dataset
 
 # COMMAND ----------
 
@@ -70,7 +75,7 @@ def download_dataset(source, target):
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # Copy Orders data from Streaming to raw folder
+# MAGIC #### Copy Orders data from Streaming to raw folder
 
 # COMMAND ----------
 
@@ -92,7 +97,7 @@ def load_file(current_index):
     dbutils.fs.cp(f"{streaming_dir}/{latest_file}", f"{raw_dir}/{latest_file}")
 
     
-def load_new_data(all=False):
+def load_orders_streaming_data(all=False):
     index = get_index(raw_dir)
     if index >= 10:
         print("No more data to load\n")
@@ -109,27 +114,51 @@ def load_new_data(all=False):
 # COMMAND ----------
 
 # Uncomment to test here
-load_new_data()
+load_orders_streaming_data()
 
 # COMMAND ----------
 
-def mount_point_exist(mount_point):
+# MAGIC %md
+# MAGIC #### Configure Mount points
+
+# COMMAND ----------
+
+def mount_point_exist(mount_point, mounts):
+    
     exists = any(mount.mountPoint == mount_point for mount in mounts)
     if exists:
-        # print(f"The mount point '{mount_point}' exists.")
+        print(f"Mount point '{mount_point}' is configured.")
         return True
     else:
-        # print(f"The mount point '{mount_point}' does not exist.")
+        print(f"Mount point '{mount_point}' does not exist.")
         return False
 
 
 # COMMAND ----------
 
 # DBTITLE 1,Mount mount points
-def create_mount_points():    
+def create_mount_points():
+    mounts = dbutils.fs.mounts()
+
+    configs = {"fs.azure.account.auth.type": "OAuth",
+          "fs.azure.account.oauth.provider.type": "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider",
+          "fs.azure.account.oauth2.client.id": application_id,
+          "fs.azure.account.oauth2.client.secret": secret_id,
+          "fs.azure.account.oauth2.client.endpoint": f"https://login.microsoftonline.com/{tenant_id}/oauth2/token"}
+    
+    storage_account_name = "db0storage"
+
     for m_point in ["bookstore", "bronze", "silver", "gold"]:
-        if not mount_point_exist(m_point):
-            create_mounts(m_point, m_point)
+        m_point = f"/mnt/{m_point}"
+        if not mount_point_exist(m_point, mounts):
+
+            # Create mounts
+            dbutils.fs.mount(
+                source = f"abfss://{m_point}@{storage_account_name}.dfs.core.windows.net/",
+                mount_point = m_point,
+                extra_configs = configs)
+            print(f"Mount point '{m_point}' is configured")
+        
 
 # COMMAND ----------
 
@@ -148,3 +177,8 @@ def unmount_mount_points():
 # COMMAND ----------
 
 #unmount_mount_points()
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC create schema if not exists bronze
