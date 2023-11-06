@@ -18,7 +18,8 @@ secret_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="db1-secret")
 
 account_name = "db0storage"
 
-data_source_uri = "wasbs://course-resources@dalhussein.blob.core.windows.net/datasets/bookstore/v1/"
+data_source_uri = dbutils.secrets.get(scope="databricks-kv2023-2", key="bookstore-dataset")
+
 dataset_bookstore = 'dbfs:/mnt/bookstore'
 spark.conf.set(f"dataset.bookstore", dataset_bookstore)
 
