@@ -1,5 +1,7 @@
 # Databricks notebook source
 full_name = "Sreenivas Angara"
+linkedIn = "https://www.linkedin.com/in/sreenivasangara/"
+blog = "https://cooolbabu.github.io/SreenivasAngara/"
 
 application_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="application-id")
 tenant_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="tenant-id")
