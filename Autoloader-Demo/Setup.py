@@ -35,28 +35,6 @@ def create_mounts(mount_point, container_name):
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-# DBTITLE 1,Add mount points - Bookstore, bronze, silver and gold
-mount_point = "/mnt/bookstore"
-dbutils.fs.ls(mount_point)
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
 # MAGIC %md
 # MAGIC # Download Dataset
 
@@ -131,7 +109,7 @@ def load_new_data(all=False):
 # COMMAND ----------
 
 # Uncomment to test here
-# load_new_data()
+load_new_data()
 
 # COMMAND ----------
 
@@ -170,7 +148,3 @@ def unmount_mount_points():
 # COMMAND ----------
 
 #unmount_mount_points()
-
-# COMMAND ----------
-
-mount_point_exist("/mnt/bronze")
