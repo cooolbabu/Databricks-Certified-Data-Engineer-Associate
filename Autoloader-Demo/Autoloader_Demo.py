@@ -1,14 +1,14 @@
 # Databricks notebook source
-# MAGIC %md
-# MAGIC ![Autoloader Image](https://adb-5536926513321019.19.azuredatabricks.net/?o=5536926513321019#files/814764643791921)
-
-# COMMAND ----------
-
 # MAGIC %run ./Helper_functions
 
 # COMMAND ----------
 
-# DBTITLE 1,Get credentials from Azure Key vault and set ids
+# MAGIC %md
+# MAGIC ![Autoloader Image](https://raw.githubusercontent.com/cooolbabu/Databricks-Certified-Data-Engineer-Associate/main/Autoloader-Demo/DataBricks_Autoloader.png)
+
+# COMMAND ----------
+
+# DBTITLE 1,Get ids and credentials from Azure Key vault.
 full_name = "Sreenivas Angara"
 linkedIn = "https://www.linkedin.com/in/sreenivasangara/"
 blog = "https://cooolbabu.github.io/SreenivasAngara/"
@@ -21,8 +21,8 @@ secret_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="db1-secret")
 storage_account_name = "db0storage"
 db0storage_sas_key = dbutils.secrets.get(scope="databricks-kv2023-2", key="db0storage-sas-key")
 
-data_source_uri = dbutils.secrets.get(scope="databricks-kv2023-2", key="bookstore-dataset")
 dataset_bookstore = 'dbfs:/mnt/bookstore'
+
 spark.conf.set(f"dataset.bookstore", dataset_bookstore)
 
 # COMMAND ----------
@@ -34,7 +34,7 @@ spark.read.parquet("/mnt/bookstore/orders-raw/01.parquet", header=True).display(
 # DBTITLE 1,Azure configuration to setup event notification
 order_stream_config = {
     "cloudFiles.format": "parquet",
-    "cloudFiles.schemaLocation": "dbfs:/mnt/bookstore/orders-in-checkpoint_",
+    "cloudFiles.schemaLocation": f"{dataset_bookstore}/orders-in-checkpoint_",
     "cloudFiles.tenantId": tenant_id,
     "cloudFiles.subscriptionId": subscription_id,
     "cloudFiles.clientId": application_id,
@@ -58,7 +58,8 @@ df_orders = ( spark.readStream.format("cloudFiles")
 
 df_orders = df_orders.withColumn("ingestion_date", current_timestamp()).withColumn("filename", input_file_name())
 
-(df_orders.writeStream.option("checkpointLocation", "dbfs:/mnt/bookstore/orders-in-checkpoint_")
+(df_orders.writeStream
+        .option("checkpointLocation", f"{dataset_bookstore}/orders-in-checkpoint_")
         .table("bronze.orders_in") )
 
 # COMMAND ----------
