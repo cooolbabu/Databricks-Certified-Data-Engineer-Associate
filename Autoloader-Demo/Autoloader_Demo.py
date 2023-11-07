@@ -101,11 +101,6 @@ df_orders = df_orders.withColumn("ingestion_date", current_timestamp()).withColu
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC select * from bronze.orders_in
-
-# COMMAND ----------
-
-# MAGIC %sql
 # MAGIC select distinct ingestion_date, filename, count(*) 
 # MAGIC from bronze.orders_in
 # MAGIC group by ingestion_date, filename
