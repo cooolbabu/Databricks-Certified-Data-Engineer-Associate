@@ -1,4 +1,9 @@
 # Databricks notebook source
+# MAGIC %md
+# MAGIC ![Autoloader Image](https://adb-5536926513321019.19.azuredatabricks.net/?o=5536926513321019#files/814764643791921)
+
+# COMMAND ----------
+
 # MAGIC %run ./Helper_functions
 
 # COMMAND ----------
@@ -8,13 +13,13 @@ full_name = "Sreenivas Angara"
 linkedIn = "https://www.linkedin.com/in/sreenivasangara/"
 blog = "https://cooolbabu.github.io/SreenivasAngara/"
 
-application_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="application-id")
 tenant_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="tenant-id")
-secret_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="db1-secret")
 subscription_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="subscription-id")
-db0storage_sas_key = dbutils.secrets.get(scope="databricks-kv2023-2", key="db0storage-sas-key")
+application_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="application-id")
+secret_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="db1-secret")
 
-account_name = "db0storage"
+storage_account_name = "db0storage"
+db0storage_sas_key = dbutils.secrets.get(scope="databricks-kv2023-2", key="db0storage-sas-key")
 
 data_source_uri = dbutils.secrets.get(scope="databricks-kv2023-2", key="bookstore-dataset")
 dataset_bookstore = 'dbfs:/mnt/bookstore'
@@ -30,18 +35,18 @@ spark.read.parquet("/mnt/bookstore/orders-raw/01.parquet", header=True).display(
 order_stream_config = {
     "cloudFiles.format": "parquet",
     "cloudFiles.schemaLocation": "dbfs:/mnt/bookstore/orders-in-checkpoint_",
-    "cloudFiles.subscriptionId": subscription_id,
-    "cloudFiles.connectionString": db0storage_sas_key,
     "cloudFiles.tenantId": tenant_id,
+    "cloudFiles.subscriptionId": subscription_id,
     "cloudFiles.clientId": application_id,
     "cloudFiles.clientSecret": secret_id,
     "cloudFiles.resourceGroup": "DataBricksLearnRG",
+    "cloudFiles.connectionString": db0storage_sas_key,
     "cloudFiles.useNotifications": "true"
 }
 
 # COMMAND ----------
 
-# DBTITLE 1,Autoloader using event notifications
+# DBTITLE 1,Autoloader using File notifications mode
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import current_timestamp, input_file_name
 
@@ -54,8 +59,7 @@ df_orders = ( spark.readStream.format("cloudFiles")
 df_orders = df_orders.withColumn("ingestion_date", current_timestamp()).withColumn("filename", input_file_name())
 
 (df_orders.writeStream.option("checkpointLocation", "dbfs:/mnt/bookstore/orders-in-checkpoint_")
-        .table("bronze.orders_in")
-      )
+        .table("bronze.orders_in") )
 
 # COMMAND ----------
 
@@ -67,6 +71,7 @@ load_orders_streaming_data()
 # MAGIC select distinct ingestion_date, filename, count(*) 
 # MAGIC from bronze.orders_in
 # MAGIC group by ingestion_date, filename
+# MAGIC order by filename
 
 # COMMAND ----------
 
@@ -75,7 +80,7 @@ load_orders_streaming_data()
 
 # COMMAND ----------
 
-# DBTITLE 1,Autoloader using default Directory Listing
+# DBTITLE 1,Autoloader using Directory Listing mode
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import current_timestamp, input_file_name
 
