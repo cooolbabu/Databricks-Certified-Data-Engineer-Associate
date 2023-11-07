@@ -3,7 +3,7 @@
 
 # COMMAND ----------
 
-# DBTITLE 1,Get credentials from Azure Key vault
+# DBTITLE 1,Get credentials from Azure Key vault and set ids
 full_name = "Sreenivas Angara"
 linkedIn = "https://www.linkedin.com/in/sreenivasangara/"
 blog = "https://cooolbabu.github.io/SreenivasAngara/"
@@ -16,23 +16,13 @@ db0storage_sas_key = dbutils.secrets.get(scope="databricks-kv2023-2", key="db0st
 
 account_name = "db0storage"
 
-data_source_uri = "wasbs://course-resources@dalhussein.blob.core.windows.net/datasets/bookstore/v1/"
+data_source_uri = dbutils.secrets.get(scope="databricks-kv2023-2", key="bookstore-dataset")
 dataset_bookstore = 'dbfs:/mnt/bookstore'
 spark.conf.set(f"dataset.bookstore", dataset_bookstore)
 
 # COMMAND ----------
 
 spark.read.parquet("/mnt/bookstore/orders-raw/01.parquet", header=True).display()
-
-# COMMAND ----------
-
-load_orders_streaming_data()
-
-# COMMAND ----------
-
-# DBTITLE 1,Count the number of rows in the table bronze.orders_in
-# MAGIC %sql
-# MAGIC select count(*) from bronze.orders_in
 
 # COMMAND ----------
 
@@ -52,11 +42,18 @@ order_stream_config = {
 # COMMAND ----------
 
 # DBTITLE 1,Autoloader using event notifications
-df = ( spark.readStream.format("cloudFiles")
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import current_timestamp, input_file_name
+
+spark = SparkSession.builder.appName("Order ingestion stream").getOrCreate()
+
+df_orders = ( spark.readStream.format("cloudFiles")
       .options(**order_stream_config)
-      .load(f"{dataset_bookstore}/orders-raw")
-      .writeStream
-        .option("checkpointLocation", "dbfs:/mnt/bookstore/orders-in-checkpoint_")
+      .load(f"{dataset_bookstore}/orders-raw") )
+
+df_orders = df_orders.withColumn("ingestion_date", current_timestamp()).withColumn("filename", input_file_name())
+
+(df_orders.writeStream.option("checkpointLocation", "dbfs:/mnt/bookstore/orders-in-checkpoint_")
         .table("bronze.orders_in")
       )
 
@@ -67,22 +64,48 @@ load_orders_streaming_data()
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC select count(*) from bronze.orders_in
+# MAGIC select distinct ingestion_date, filename, count(*) 
+# MAGIC from bronze.orders_in
+# MAGIC group by ingestion_date, filename
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC delete from bronze.orders_in
+# MAGIC drop table bronze.orders_in
 
 # COMMAND ----------
 
 # DBTITLE 1,Autoloader using default Directory Listing
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import current_timestamp, input_file_name
+
+spark = SparkSession.builder.appName("Read-Write Stream").getOrCreate()
+
 df_orders = (spark.readStream
-        .format("cloudFiles")
-        .option("cloudFiles.format", "parquet")
-        .option("cloudFiles.schemaLocation", "dbfs:/mnt/bookstore/orders_raw/al_ds_checkpoint_")
-        .load(f"{dataset_bookstore}/orders-raw")
-      .writeStream
-        .option("checkpointLocation", "dbfs:/mnt/bookstore/orders_raw/al_ds_checkpoint_")
-        .table("bronze.orders_in")
+    .format("cloudFiles")
+    .option("cloudFiles.format", "parquet")
+    .option("cloudFiles.schemaLocation", "dbfs:/mnt/bookstore/orders2-in-checkpoint_")
+    .load(f"{dataset_bookstore}/orders-raw")
 )
+
+df_orders = df_orders.withColumn("ingestion_date", current_timestamp()).withColumn("filename", input_file_name())
+
+(df_orders.writeStream
+    .outputMode("append")
+    .option("checkpointLocation", "dbfs:/mnt/bookstore/orders2-in-checkpoint_")
+    .table("bronze.orders_in")
+)
+
+
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select * from bronze.orders_in
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select distinct ingestion_date, filename, count(*) 
+# MAGIC from bronze.orders_in
+# MAGIC group by ingestion_date, filename
