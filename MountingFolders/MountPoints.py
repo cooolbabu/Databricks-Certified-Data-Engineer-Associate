@@ -22,8 +22,9 @@ dbutils.secrets.list(scope = 'databricks-kv2023-2')
 
 # COMMAND ----------
 
-#client_id = dbutils.secrets.get(scope='databricks-kv2023-2', key = 'client-id')
-tenant_id = dbutils.secrets.get(scope='databricks-kv2023-2', key = 'tenant-id')
+application_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="application-id")
+tenant_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="tenant-id")
+secret_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="db1-secret")
 
 display(tenant_id)
 
@@ -55,5 +56,5 @@ m_point = "bronze"
 
 dbutils.fs.mount(
     source = f"abfss://{m_point}@{storage_account_name}.dfs.core.windows.net/",
-    mount_point = m_point,
+    mount_point = f"/mnt/{m_point}",
     extra_configs = configs)
