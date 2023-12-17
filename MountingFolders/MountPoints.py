@@ -68,7 +68,7 @@ dbutils.fs.mount(
 # COMMAND ----------
 
 storage_account_name = "databricksdl101"
-demo_sas_token = "?sv=2022-11-02&ss=bfqt&srt=sco&sp=rwdlacupyx&se=2023-12-18T04:59:10Z&st=2023-12-17T20:59:10Z&spr=https&sig=EyKx%2FYdIJVmH6LVIn7q%2BdW99oneu7rCgWjL1lFPXpKg%3D"
+demo_sas_token = "Generate a SAS key at storage account level and plug it here"
 
 # SAS key was from the storage account level. Container level as prescribed in the course material is not working
 
