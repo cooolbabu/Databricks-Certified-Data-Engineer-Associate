@@ -44,7 +44,7 @@ order_stream_config = {
     "cloudFiles.subscriptionId": subscription_id,
     "cloudFiles.clientId": application_id,
     "cloudFiles.clientSecret": secret_id,
-    "cloudFiles.resourceGroup": "DataBricksLearnRG",
+    "cloudFiles.resourceGroup": "DataBricksRG",
     "cloudFiles.connectionString": db0storage_connection_string,
     "cloudFiles.useNotifications": "true"
 }

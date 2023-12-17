@@ -1,6 +1,13 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # Running Helper functions
+# MAGIC
+# MAGIC Databricks application id must have contributor role on Resource group
+# MAGIC Storage Blob data contributor role in on Storage
+# MAGIC EventGrid EventSubscription Contributor
+# MAGIC Storage Queue Data Contributor
+# MAGIC
+# MAGIC Set it at Subscription level so that inheritance takes care of it.
 
 # COMMAND ----------
 

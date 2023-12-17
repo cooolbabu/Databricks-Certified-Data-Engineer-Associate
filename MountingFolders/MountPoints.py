@@ -58,3 +58,26 @@ dbutils.fs.mount(
     source = f"abfss://{m_point}@{storage_account_name}.dfs.core.windows.net/",
     mount_point = f"/mnt/{m_point}",
     extra_configs = configs)
+
+# COMMAND ----------
+
+# MAGIC %md 
+# MAGIC # MountPoints using SAS tokens
+# MAGIC Ramesh class
+
+# COMMAND ----------
+
+storage_account_name = "databricksdl101"
+demo_sas_token = "?sv=2022-11-02&ss=bfqt&srt=sco&sp=rwdlacupyx&se=2023-12-18T04:59:10Z&st=2023-12-17T20:59:10Z&spr=https&sig=EyKx%2FYdIJVmH6LVIn7q%2BdW99oneu7rCgWjL1lFPXpKg%3D"
+
+# SAS key was from the storage account level. Container level as prescribed in the course material is not working
+
+spark.conf.set(f"fs.azure.account.auth.type.{storage_account_name}.dfs.core.windows.net", "SAS")
+spark.conf.set(f"fs.azure.sas.token.provider.type.{storage_account_name}.dfs.core.windows.net", "org.apache.hadoop.fs.azurebfs.sas.FixedSASTokenProvider")
+spark.conf.set(f"fs.azure.sas.fixed.token.{storage_account_name}.dfs.core.windows.net", demo_sas_token)
+
+
+
+# COMMAND ----------
+
+display(dbutils.fs.ls(f"abfss://demo@{storage_account_name}.dfs.core.windows.net"))
