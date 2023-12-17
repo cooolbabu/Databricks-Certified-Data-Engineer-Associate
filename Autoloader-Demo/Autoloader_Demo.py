@@ -23,8 +23,8 @@ subscription_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="subscrip
 application_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="application-id")
 secret_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="db1-secret")
 
-storage_account_name = "db0storage"
-db0storage_connection_string = dbutils.secrets.get(scope="databricks-kv2023-2", key="db0storage-sas-key")
+storage_account_name = "databricksdl101"
+db0storage_connection_string = dbutils.secrets.get(scope="databricks-kv2023-2", key="databricksdl101")
 
 dataset_bookstore = 'dbfs:/mnt/bookstore'
 

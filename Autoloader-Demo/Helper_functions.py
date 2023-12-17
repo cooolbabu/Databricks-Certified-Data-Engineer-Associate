@@ -16,7 +16,7 @@ application_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="applicati
 tenant_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="tenant-id")
 secret_id = dbutils.secrets.get(scope="databricks-kv2023-2", key="db1-secret")
 
-account_name = "db0storage"
+account_name = "databricksdl101"
 
 data_source_uri = dbutils.secrets.get(scope="databricks-kv2023-2", key="bookstore-dataset")
 
@@ -63,6 +63,7 @@ def download_dataset(source, target):
     for f in files:
         source_path = f"{source}/{f.name}"
         target_path = f"{target}/{f.name}"
+        print(f"Source: {source_path}  -- Target: {target_path}")
         if not path_exists(target_path):
             print(f"Copying {f.name} ...")
             dbutils.fs.cp(source_path, target_path, True)
@@ -71,7 +72,7 @@ def download_dataset(source, target):
 
 # DBTITLE 1,Download Dataset
 # Uncomment if you want to execute from here 
-# download_dataset(data_source_uri, dataset_bookstore)
+download_dataset(data_source_uri, dataset_bookstore)
 
 # COMMAND ----------
 
@@ -94,7 +95,7 @@ def get_index(dir):
     
 def load_file(current_index):
     latest_file = f"{str(current_index).zfill(2)}.parquet"
-    print(f"Loading {latest_file} file to the bookstore dataset")
+    print(f"Loading {streaming_dir}/{latest_file} file to the bookstore dataset folder {raw_dir}/{latest_file}")
     dbutils.fs.cp(f"{streaming_dir}/{latest_file}", f"{raw_dir}/{latest_file}")
 
     
@@ -147,15 +148,15 @@ def create_mount_points():
           "fs.azure.account.oauth2.client.secret": secret_id,
           "fs.azure.account.oauth2.client.endpoint": f"https://login.microsoftonline.com/{tenant_id}/oauth2/token"}
     
-    storage_account_name = "db0storage"
+    storage_account_name = "databricksdl101"
 
-    for m_point in ["bookstore", "bronze", "silver", "gold"]:
-        m_point = f"/mnt/{m_point}"
+    for m_containers in ["bookstore", "bronze", "silver", "gold"]:
+        m_point = f"/mnt/{m_containers}"
         if not mount_point_exist(m_point, mounts):
 
             # Create mounts
             dbutils.fs.mount(
-                source = f"abfss://{m_point}@{storage_account_name}.dfs.core.windows.net/",
+                source = f"abfss://{m_containers}@{storage_account_name}.dfs.core.windows.net/",
                 mount_point = m_point,
                 extra_configs = configs)
             print(f"Mount point '{m_point}' is configured")
@@ -170,9 +171,9 @@ create_mount_points()
 # DBTITLE 1,Unmount mount points
 
 def unmount_mount_points():
-    for m_point in ["bookstore", "bronze", "silver", "gold"]:
-        m_point = f"/mnt/{mount_point}"
-        if mount_point_exist(m_point):
+    for m_containers in ["bookstore", "bronze", "silver", "gold"]:
+        m_point = f"/mnt/{m_containers}"
+        if mount_point_exist(m_point, dbutils.fs.mounts()):
             dbutils.fs.unmount(m_point)
 
 # COMMAND ----------
